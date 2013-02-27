@@ -42,20 +42,15 @@ module.exports = function (opt) {
       req = require(protocol).request(opt, function (res) {
         var err, data = '';
         if (res.statusCode !== 200) {
-          err = 'Status code not OK: ' + res.statusCode;
+          err = new Error('Status code ' + res.statusCode);
         }
         res.setEncoding('utf8');
         res.on('data', function (chunk) { data += chunk });
         res.on('end', function (chunk) {
-          var res = {
-            message: err,
+          callback(err, {
             xml: data,
             headers: res.headers
-          };
-          if (err != null)
-            callback(res);
-          else
-            callback(undefined, res);
+          });
         });
       }).on('error', function(e) { callback(e); });
       req.write(xml);
