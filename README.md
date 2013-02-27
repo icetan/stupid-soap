@@ -3,7 +3,7 @@
 This is a non complient SOAP client.
 
 ```javascript
-var soap = require('soap-envelope');
+var soap = require('stupid-soap');
 
 soap({
   action: 'Gnurp',
