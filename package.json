@@ -1,0 +1,17 @@
+{
+  "name": "stupid-soap",
+  "version": "0.0.1",
+  "description": "Generate simple SOAP envelope and send it, because I hate SOAP.",
+  "author": "Christopher Fredén <c.freden@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icetan/stupid-soap.git"
+  },
+  "licenses": [{
+    "type": "MIT",
+    "url": "https://raw.github.com/icetan/stupid-soap/master/LICENSE"
+  }],
+  "engines": {
+    "node": "~0.8.20"
+  }
+}
