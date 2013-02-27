@@ -47,14 +47,17 @@ module.exports = function (opt) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) { data += chunk });
         res.on('end', function (chunk) {
-          callback(err, {
+          var res = {
+            message: err,
             xml: data,
             headers: res.headers
-          });
+          };
+          if (err != null)
+            callback(res);
+          else
+            callback(undefined, res);
         });
-      }).on('error', function(e) {
-        callback('problem with request: ' + e.message);
-      });
+      }).on('error', function(e) { callback(e); });
       req.write(xml);
       req.end();
     }
