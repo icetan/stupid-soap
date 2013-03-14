@@ -6,8 +6,8 @@ function toXml(res, el) {
       el.reduce(toXml, res) :
       (el instanceof Object ?
         Object.getOwnPropertyNames(el).map(function(name) {
-          var attrs = el[name+'$'];
-          if (name.slice(-1) === '$') return '';
+          var attrs = el['$'+name];
+          if (name.substr(0,1) === '$') return '';
           return '<'+name+
             (attrs instanceof Object ?
               ' ' + Object.getOwnPropertyNames(attrs).map(function(an) {
