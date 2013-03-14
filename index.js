@@ -1,14 +1,27 @@
 var urlParse = require('url').parse;
 
+function toXml(res, el) {
+  return res.concat(
+    (el instanceof Array ?
+      el.reduce(toXml, res) :
+      (el instanceof Object ?
+        Object.getOwnPropertyNames(el).map(function(name) {
+          var attrs = el[name+'$'];
+          if (name.slice(-1) === '$') return '';
+          return '<'+name+
+            (attrs instanceof Object ?
+              ' ' + Object.getOwnPropertyNames(attrs).map(function(an) {
+                return an + '="' + (''+attrs[an]).replace(/"/g, '\\"') + '"';
+              }).join(' ') : ''
+            )+'>'+toXml([], el[name]).join('')+'</'+name+'>';
+        }) : [el]
+      )
+    )
+  );
+}
+
 module.exports = function (opt) {
   var xml, envelope;
-
-  function params() {
-    var res = [], i;
-    for (i in opt.params)
-      res.push('<'+i+'>'+opt.params[i]+'</'+i+'>');
-    return res.join('');
-  }
 
   xml = '<?xml version="1.0" encoding="utf-8"?>' +
     '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
@@ -16,7 +29,7 @@ module.exports = function (opt) {
     ' xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
     '<soap:Body>' +
       '<'+opt.action+' xmlns="'+opt.xmlns+'">' +
-        params() +
+        toXml([], opt.params).join('') +
       '</'+opt.action+'>' +
     '</soap:Body></soap:Envelope>';
 
