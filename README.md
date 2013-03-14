@@ -11,7 +11,7 @@ soap({
     i: 'do',
     not: 'like',
     soap: '!'
-  }
+  },
   xmlns: 'http://example.com/'
 }).send('https://example.com/my/barf/WebService.asmx', function (err, data) {
   console.log(err, data);
