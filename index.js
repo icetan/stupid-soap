@@ -1,5 +1,13 @@
 var urlParse = require('url').parse;
 
+/* Borrowed from https://code.google.com/p/x2js/ */
+function escapeXmlChars(str) {
+  if(typeof(str) == "string")
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g, '&#x2F;');
+  else
+    return str;
+}
+
 function toXml(res, el) {
   return res.concat(
     (el instanceof Array ?
@@ -11,10 +19,10 @@ function toXml(res, el) {
           return '<'+name+
             (attrs instanceof Object ?
               ' ' + Object.getOwnPropertyNames(attrs).map(function(an) {
-                return an + '="' + (''+attrs[an]).replace(/"/g, '\\"') + '"';
+                return an + '="' + escapeXmlChars(''+attrs[an]) + '"';
               }).join(' ') : ''
             )+'>'+toXml([], el[name]).join('')+'</'+name+'>';
-        }) : [el]
+        }) : [escapeXmlChars(el)]
       )
     )
   );

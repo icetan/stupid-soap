@@ -1,6 +1,6 @@
 # SOAP, blä! 
 
-This is a non complient SOAP client.
+This is a non-compliant SOAP client.
 
 ```javascript
 var soap = require('stupid-soap');
@@ -10,7 +10,7 @@ soap({
   params: {
     i: 'do',
     not: 'like',
-    soap: '!'
+    soap: '! <tihi>'
   },
   xmlns: 'http://example.com/'
 }).send('https://example.com/my/barf/WebService.asmx', function (err, data) {
