@@ -1,15 +1,10 @@
-Proj4js -- Javascript reprojection library. 
+stupid-soap
  
-Authors:       Mike Adair madairATdmsolutions.ca
-               Richard Greenwood richATgreenwoodmap.com
-               Didier Richard didier.richardATign.fr
-               Stephen Irons stephen.ironsATclear.net.nz
-               Olivier Terral oterralATgmail.com
+Authors:       Christopher Fredén
                
 License:       MIT 
 
-Copyright (c) 2012, Mike Adair, Richard Greenwood, Didier Richard, 
-                    Stephen Irons and Olivier Terral
+Copyright (c) 2012, Christopher Fredén
 
  Permission is hereby granted, free of charge, to any person obtaining a
  copy of this software and associated documentation files (the "Software"),
