@@ -47,32 +47,49 @@ module.exports = function (opt) {
     headers: {
       'content-type': 'text/xml; charset=utf-8',
       'content-length': xml.length,
+      'accept': 'text/xml; charset=utf-8',
+      'accept-charset': 'utf-8',
       'SOAPAction': opt.xmlns+opt.action
     },
 
     send: function (url, callback) {
       var urlParts = urlParse(url),
           protocol = urlParts.protocol.slice(0,-1),
-          opt = {
+          opt_ = {
             hostname: urlParts.hostname,
             port: urlParts.port,
             path: urlParts.path,
             method: 'POST',
             headers: envelope.headers
           }, req;
-      req = require(protocol).request(opt, function (res) {
-        var err, data = '';
+      req = require(protocol).request(opt_, function (res) {
+        var ct = res.headers['content-type'],
+            result = {
+              headers: res.headers,
+              charset: (ct && (m = ct.match(/charset=([^\s]+)/i)) && m[1]) ?
+                m[1] : undefined
+            },
+            m, err, data, chunks;
+
         if (res.statusCode !== 200) {
           err = new Error('Status code ' + res.statusCode);
         }
-        res.setEncoding('utf8');
-        res.on('data', function (chunk) { data += chunk });
-        res.on('end', function (chunk) {
-          callback(err, {
-            xml: data,
-            headers: res.headers
+        if (opt.raw) {
+          chunks = [];
+          res.on('data', function (chunk) { chunks.push(chunk); });
+          res.on('end', function () {
+            result.raw = Buffer.concat(chunks);
+            callback(err, result);
           });
-        });
+        } else {
+          data = '';
+          res.setEncoding('utf8');
+          res.on('data', function (chunk) { data += chunk });
+          res.on('end', function (chunk) {
+            result.xml = data;
+            callback(err, result);
+          });
+        }
       }).on('error', function(e) { callback(e); });
       req.write(xml);
       req.end();
