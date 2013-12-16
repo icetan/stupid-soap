@@ -12,6 +12,6 @@
     "url": "https://raw.github.com/icetan/stupid-soap/master/LICENSE"
   }],
   "engines": {
-    "node": "~0.8.20"
+    "node": ">=0.8"
   }
 }
