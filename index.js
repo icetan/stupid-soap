@@ -1,4 +1,6 @@
-var urlParse = require('url').parse;
+var urlParse = require('url').parse,
+    iconv = require('iconv-lite');
+
 
 /* Borrowed from https://code.google.com/p/x2js/ */
 function escapeXmlChars(str) {
@@ -8,10 +10,10 @@ function escapeXmlChars(str) {
     return str;
 }
 
-function toXml(res, el) {
+function _toXml(res, el) {
   return res.concat(
     (el instanceof Array ?
-      el.reduce(toXml, res) :
+      el.reduce(_toXml, res) :
       (el instanceof Object ?
         Object.getOwnPropertyNames(el).map(function(name) {
           var attrs = el['$'+name];
@@ -21,25 +23,34 @@ function toXml(res, el) {
               ' ' + Object.getOwnPropertyNames(attrs).map(function(an) {
                 return an + '="' + escapeXmlChars(''+attrs[an]) + '"';
               }).join(' ') : ''
-            )+'>'+toXml([], el[name]).join('')+'</'+name+'>';
+            )+'>'+_toXml([], el[name]).join('')+'</'+name+'>';
         }) : [escapeXmlChars(el)]
       )
     )
   );
 }
 
+function toXml(obj) {
+  return _toXml([], obj).join('');
+}
+
 module.exports = function (opt) {
   var xml, envelope;
 
-  xml = '<?xml version="1.0" encoding="utf-8"?>' +
-    '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
-    ' xmlns:xsd="http://www.w3.org/2001/XMLSchema"' +
-    ' xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
-    '<soap:Body>' +
-      '<'+opt.action+' xmlns="'+opt.xmlns+'">' +
-        toXml([], opt.params).join('') +
-      '</'+opt.action+'>' +
-    '</soap:Body></soap:Envelope>';
+  xml = (opt.raw ?
+      (opt.xml ||
+        '<?xml version="1.0" encoding="utf-8"?>\n' + toXml(opt.params)
+      ) :
+      '<?xml version="1.0" encoding="utf-8"?>\n' +
+      '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
+      ' xmlns:xsd="http://www.w3.org/2001/XMLSchema"' +
+      ' xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+      '<soap:Body>' +
+        '<'+opt.action+' xmlns="'+opt.xmlns+'">' +
+          (opt.xml || toXml(opt.params)) +
+        '</'+opt.action+'>' +
+      '</soap:Body></soap:Envelope>'
+    );
 
   envelope = {
     xml: xml,
@@ -48,8 +59,7 @@ module.exports = function (opt) {
       'content-type': 'text/xml; charset=utf-8',
       'content-length': xml.length,
       'accept': 'text/xml; charset=utf-8',
-      'accept-charset': 'utf-8',
-      'SOAPAction': opt.xmlns+opt.action
+      'accept-charset': 'utf-8'
     },
 
     send: function (url, callback) {
@@ -67,34 +77,29 @@ module.exports = function (opt) {
             result = {
               headers: res.headers,
               charset: (ct && (m = ct.match(/charset=([^\s]+)/i)) && m[1]) ?
-                m[1] : undefined
+                m[1].toLowerCase() : undefined
             },
-            m, err, data, chunks;
+            chunks = [],
+            m, err;
 
         if (res.statusCode !== 200) {
           err = new Error('Status code ' + res.statusCode);
         }
-        if (opt.raw) {
-          chunks = [];
-          res.on('data', function (chunk) { chunks.push(chunk); });
-          res.on('end', function () {
-            result.raw = Buffer.concat(chunks);
-            callback(err, result);
-          });
-        } else {
-          data = '';
-          res.setEncoding('utf8');
-          res.on('data', function (chunk) { data += chunk });
-          res.on('end', function (chunk) {
-            result.xml = data;
-            callback(err, result);
-          });
-        }
+        res.on('data', function (chunk) { chunks.push(chunk); });
+        res.on('end', function () {
+          result.raw = Buffer.concat(chunks);
+          result.xml = iconv.decode(result.raw, result.charset || 'utf8');
+          callback(err, result);
+        });
       }).on('error', function(e) { callback(e); });
       req.write(xml);
       req.end();
     }
   };
 
+  if (!opt.raw) envelope.headers.SOAPAction = opt.xmlns+opt.action;
+
   return envelope;
 };
+
+module.exports.toXml = toXml;
