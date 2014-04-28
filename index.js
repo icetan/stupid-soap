@@ -4,10 +4,13 @@ var urlParse = require('url').parse,
 
 /* Borrowed from https://code.google.com/p/x2js/ */
 function escapeXmlChars(str) {
-  if(typeof(str) == "string")
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/\//g, '&#x2F;');
-  else
-    return str;
+  return typeof(str) === "string" ?
+    str.replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;') : str;
 }
 
 function _toXml(res, el) {
