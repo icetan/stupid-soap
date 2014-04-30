@@ -1,6 +1,6 @@
 {
   "name": "stupid-soap",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Generate simple SOAP envelope and send it, because I hate SOAP.",
   "author": "Christopher Fredén <c.freden@gmail.com>",
   "repository": {
