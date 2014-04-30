@@ -3,38 +3,43 @@ var urlParse = require('url').parse,
 
 
 /* Borrowed from https://code.google.com/p/x2js/ */
-function escapeXmlChars(str) {
+function escapeXmlChars(str, cdata) {
   return typeof(str) === "string" ?
-    str.replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;')
-      .replace(/\//g, '&#x2F;') : str;
+    (cdata ?
+      (str === '' ? '' : '<![CDATA[' + str + ']]>') :
+      str.replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;')
+    ) : str;
 }
 
-function _toXml(res, el) {
+function _toXml(res, el, cdata) {
   return res.concat(
     (el instanceof Array ?
-      el.reduce(_toXml, res) :
+      el.reduce(function(res, el) { return _toXml(res, el, cdata); }, res) :
       (el instanceof Object ?
         Object.getOwnPropertyNames(el).map(function(name) {
-          var attrs = el['$'+name];
+          var attrs = el['$'+name],
+              opt = el['$__'+name];
           if (name.substr(0,1) === '$') return '';
           return '<'+name+
             (attrs instanceof Object ?
               ' ' + Object.getOwnPropertyNames(attrs).map(function(an) {
                 return an + '="' + escapeXmlChars(''+attrs[an]) + '"';
               }).join(' ') : ''
-            )+'>'+_toXml([], el[name]).join('')+'</'+name+'>';
-        }) : [escapeXmlChars(el)]
+            )+'>'+_toXml([], el[name], opt ? opt.cdata : cdata).join('')+
+            '</'+name+'>';
+        }) : [escapeXmlChars(el, cdata)]
       )
     )
   );
 }
 
-function toXml(obj) {
-  return _toXml([], obj).join('');
+function toXml(obj, opt) {
+  return _toXml([], obj, opt && opt.cdata).join('');
 }
 
 module.exports = function (opt) {
@@ -42,7 +47,8 @@ module.exports = function (opt) {
 
   xml = (opt.raw ?
       (opt.xml ||
-        '<?xml version="1.0" encoding="utf-8"?>\n' + toXml(opt.params)
+        '<?xml version="1.0" encoding="utf-8"?>\n' +
+        toXml(opt.params, { cdata:opt.cdata })
       ) :
       '<?xml version="1.0" encoding="utf-8"?>\n' +
       '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' +
@@ -50,7 +56,7 @@ module.exports = function (opt) {
       ' xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
       '<soap:Body>' +
         '<'+opt.action+' xmlns="'+opt.xmlns+'">' +
-          (opt.xml || toXml(opt.params)) +
+          (opt.xml || toXml(opt.params, { cdata:opt.cdata })) +
         '</'+opt.action+'>' +
       '</soap:Body></soap:Envelope>'
     );
